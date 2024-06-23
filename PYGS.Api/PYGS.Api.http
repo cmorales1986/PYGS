@@ -1,0 +1,6 @@
+@PYGS.Api_HostAddress = http://localhost:5148
+
+GET {{PYGS.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
