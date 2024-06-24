@@ -1,16 +1,31 @@
 ﻿@inherits LayoutComponentBase
-<div class="page">
-    <div class="sidebar">
-        <NavMenu />
-    </div>
+@inject NavigationManager navigationManager
 
-    <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
-        </div>
-
-        <article class="content px-4">
+<div class="dashboard-main-wrapper">
+    <NavMenu />
+    <SideBar />
+    <div class="dashboard-wrapper">
+        <div class="dashboard-ecommerce">
             @Body
-        </article>
-    </main>
+        </div>
+        @* <Footer /> *@
+    </div>
 </div>
+
+@code {
+    [CascadingParameter]
+    private Task<AuthenticationState> AuthenticationStateTask { get; set; } = null!;
+
+    protected async override Task OnParametersSetAsync()
+    {
+        var autenticationState = await AuthenticationStateTask;
+        var claims = autenticationState.User.Claims.ToList();
+        var url = navigationManager.Uri;
+
+        if (claims.Count() == 0 && !url.Contains("Register") && !url.Contains("ConfirmEmail") && !url.Contains("ResendToken") && !url.Contains("RecoverPassword") && !url.Contains("ResetPassword"))
+        {
+            navigationManager.NavigateTo("/Login");
+
+        }
+    }
+}

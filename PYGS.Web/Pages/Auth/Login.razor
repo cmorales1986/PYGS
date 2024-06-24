@@ -1,0 +1,64 @@
+﻿@layout LoginLayout
+@page "/Login"
+
+@inject IRepository repository
+@inject SweetAlertService sweetAlertService
+@inject NavigationManager navigationManager
+@inject ILoginService loginService
+
+<div class="splash-container" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">
+    <div class="card ">
+        <div class="card-header text-center"><a href="../index.html"><img class="logo-img" src="../assets/images/logo.png" alt="logo"></a><span class="splash-description">Por favor ingresa los datos del usuario.</span></div>
+        <div class="card-body">
+             <EditForm Model="loginDTO" OnValidSubmit="LoginAsync" class="text-start">
+                                <DataAnnotationsValidator />
+                <div class="form-group">
+                    <InputText class="form-control form-control-lg" id="username" @bind-Value="@loginDTO.Email" placeholder="Correo"  />
+                    <ValidationMessage For="@(() => loginDTO.Email)" />
+                </div>
+                <div class="form-group">
+                    <InputText type="password" class="form-control form-control-lg" @bind-Value="@loginDTO.Password" placeholder="Password" />
+                    <ValidationMessage For="@(() => loginDTO.Password)" />
+                </div>
+                <div class="form-group">
+                    <label class="custom-control custom-checkbox">
+                        <input class="custom-control-input" type="checkbox"><span class="custom-control-label">Recuerdame</span>
+                    </label>
+                </div>
+                <button type="submit" class="btn btn-primary btn-lg btn-block">Ingresar</button>
+            </EditForm>
+        </div>
+        <div class="card-footer bg-white p-0  ">
+            <div class="card-footer-item card-footer-item-bordered">
+                <a href="#" class="footer-link">Crear Cuenta</a>
+            </div>
+            <div class="card-footer-item card-footer-item-bordered">
+                <a href="#" class="footer-link">Olvide mi Contraseña</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private LoginDTO loginDTO = new();
+
+    private async Task LoginAsync()
+    {
+        try
+        {
+            var responseHttp = await repository.Post<LoginDTO, TokenDTO>("/api/accounts/Login", loginDTO);
+            if (responseHttp.Error)
+            {
+                var message = await responseHttp.GetErrorMessageAsync();
+                await sweetAlertService.FireAsync("Error", message, SweetAlertIcon.Error);
+            }
+
+            await loginService.LoginAsync(responseHttp.Response!.Token);
+            navigationManager.NavigateTo("/");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+        }
+    }
+}
