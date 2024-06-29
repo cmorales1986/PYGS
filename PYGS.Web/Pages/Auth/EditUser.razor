@@ -1,0 +1,155 @@
+﻿@page "/EditUser"
+@inject IRepository repository
+@inject SweetAlertService sweetAlertService
+@inject NavigationManager navigationManager
+@inject ILoginService loginService
+
+<div class="container-fluid dashboard-content">
+    <div class="row">
+        <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-12">
+            <div class="page-header">
+                <h2 class="pageheader-title">Editar Usuario </h2>
+                <p class="pageheader-text">Proin placerat ante duiullam scelerisque a velit ac porta, fusce sit amet vestibulum mi. Morbi lobortis pulvinar quam.</p>
+                <div class="page-breadcrumb">
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="/" class="breadcrumb-link">Home</a></li>
+                            <li class="breadcrumb-item active" aria-current="page">Editar Usuario</li>
+                        </ol>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-12">
+            <div class="card">
+                <h5 class="card-header">Edicion del usuario </h5>
+                <div class="card-body">
+                    <EditForm Model="user" OnValidSubmit="SaveUserAsync">
+                    <DataAnnotationsValidator /> 
+                        <div class="form-group row">
+                            <label class="col-12 col-sm-3 col-form-label text-sm-right">Nombres: </label>
+                            <div class="col-12 col-sm-8 col-lg-6">
+                                <InputText type="text" class="form-control" id="nombre" @bind-Value="@user!.FirstName" />
+                                <ValidationMessage For="@(() => user.FirstName)" />
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label class="col-12 col-sm-3 col-form-label text-sm-right">Apellidos: </label>
+                            <div class="col-12 col-sm-8 col-lg-6">
+                                <InputText type="text" class="form-control" id="nombre" @bind-Value="@user.LastName" />
+                                <ValidationMessage For="@(() => user.LastName)" />
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label class="col-12 col-sm-3 col-form-label text-sm-right">Documento: </label>
+                            <div class="col-12 col-sm-8 col-lg-6">
+                                <InputText type="text" class="form-control" id="nombre" @bind-Value="@user.Document" />
+                                <ValidationMessage For="@(() => user.Document)" />
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label class="col-12 col-sm-3 col-form-label text-sm-right">Ciudad: </label>
+                            <div class="col-12 col-sm-8 col-lg-6">
+                                <select class="form-control" @bind="user.CiudadId">
+                                    @if(ciudades != null)
+                                    {
+                                        @foreach(var ciudad in ciudades)
+                                        {
+                                            <option value="@ciudad.Id">@ciudad.Name</option>
+                                        }
+                                    }
+                                </select>
+                                <ValidationMessage For="@(() => user.CiudadId)" />
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label class="col-12 col-sm-3 col-form-label text-sm-right">Foto: </label>
+                            <InputImg Label="Foto" ImageSelected="ImageSelected" ImageURL="@imageUrl" />
+                        </div>
+                        <div class="form-group row text-right">
+                            <div class="col col-sm-10 col-lg-9 offset-sm-1 offset-lg-0">
+                                <button type="submit" class="btn btn-space btn-primary">Guardar</button>
+                                <button class="btn btn-space btn-secondary">Cancelar</button>
+                            </div>
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+</div>
+
+@code {
+    private User? user;
+    private List<Ciudad>? ciudades;
+    private string? imageUrl;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadUserAsyc();
+        await LoadCitiesAsyn();
+
+        if (!string.IsNullOrEmpty(user!.Photo))
+        {
+            imageUrl = user.Photo;
+            user.Photo = null;
+        }
+
+    }
+
+    private async Task LoadUserAsyc()
+    {
+        var responseHTTP = await repository.Get<User>($"/api/accounts");
+        if (responseHTTP.Error)
+        {
+            if (responseHTTP.HttpResponseMessage.StatusCode == System.Net.HttpStatusCode.NotFound)
+            {
+                navigationManager.NavigateTo("/");
+                return;
+            }
+            var messageError = await responseHTTP.GetErrorMessageAsync();
+            await sweetAlertService.FireAsync("Error", messageError, SweetAlertIcon.Error);
+            return;
+        }
+        user = responseHTTP.Response;
+    }
+
+    private void ImageSelected(string imagenBase64)
+    {
+        user!.Photo = imagenBase64;
+        imageUrl = null;
+    }
+
+    private async Task LoadCitiesAsyn()
+    {
+        var responseHttp = await repository.Get<List<Ciudad>>($"/api/ciudades/combo");
+        if (responseHttp.Error)
+        {
+            var message = await responseHttp.GetErrorMessageAsync();
+            await sweetAlertService.FireAsync("Error", message, SweetAlertIcon.Error);
+            return;
+        }
+
+        ciudades = responseHttp.Response;
+    }
+
+    private async Task SaveUserAsync()
+    {
+        var responseHttp = await repository.Put<User, TokenDTO>("/api/accounts", user!);
+        if (responseHttp.Error)
+        {
+            var message = await responseHttp.GetErrorMessageAsync();
+            await sweetAlertService.FireAsync("Error", message, SweetAlertIcon.Error);
+            return;
+        }
+
+        await loginService.LoginAsync(responseHttp.Response!.Token);
+        navigationManager.NavigateTo("/");
+    }
+
+}

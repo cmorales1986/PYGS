@@ -1,0 +1,810 @@
+﻿@page "/adicional/programacionfaena"
+@inject SweetAlertService sweetAlertService
+@inject HttpClient Http
+@inject NotificationService NotificationService
+@using System.Net.Http.Json
+
+<div class="container-fluid  dashboard-content">
+    <div class="row">
+        <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-12">
+            <div class="page-header">
+                <h2 class="pageheader-title">Programacion Faena </h2>
+                <p class="pageheader-text">Proin placerat ante duiullam scelerisque a velit ac porta, fusce sit amet vestibulum mi. Morbi lobortis pulvinar quam.</p>
+                <div class="page-breadcrumb">
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="/" class="breadcrumb-link">Home</a></li>
+                            <li class="breadcrumb-item active" aria-current="page">Programacion Faena</li>
+                        </ol>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12 col-12">
+            <div class="card">
+                <h5 class="card-header">Programacion Faena Semanal</h5>
+                <div class="card-body">
+                    @if (spinner)
+                    {
+                        <div class="d-flex justify-content-center align-items-center">
+                            <span class="dashboard-spinner spinner-primary spinner-md"></span>
+                        </div>
+                    }
+                    else
+                    {
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="10px" class="mt-2 mb-4">
+                            <RadzenButton ButtonStyle="ButtonStyle.Success" Icon="add_circle_outline" Text="Nuevo Registro" Click="@InsertRow" />
+                        </RadzenStack>
+
+                        <RadzenDataGrid @ref="grid" AllowFiltering="true" AllowPaging="true" PageSize="5" AllowSorting="true" EditMode="DataGridEditMode.Single"
+                                        Data="@programacionCargaCerdos" TItem="ProgramacionCargaCerdos" RowUpdate="@OnUpdateRow" RowCreate="@OnCreateRow" GridLines="DataGridGridLines.Both">
+                            <Columns>
+                               @*   <RadzenDataGridColumn Property="id" Title="Id" Resizable="true" SortOrder="SortOrder.Descending" />  *@
+
+                                <RadzenDataGridColumn Property="Fecha" Title="Fecha" TextAlign="Radzen.TextAlign.Center">
+                                    <Template Context="item">
+                                        @String.Format("{0:d}", item.Fecha)
+                                    </Template>
+                                    <EditTemplate Context="item">
+                                        <RadzenDatePicker @bind-Value="item.Fecha" Style="width: 90%; font-size: 12px;" />
+                                    </EditTemplate>
+                                </RadzenDataGridColumn>
+                                <RadzenDataGridColumn Property="Cliente" Title="Cliente" TextAlign="Radzen.TextAlign.Center">
+                                    <EditTemplate Context="item">
+                                        <RadzenTextBox @bind-Value="item.Cliente" Style="width: 90%; font-size: 12px;" />
+                                    </EditTemplate>
+                                </RadzenDataGridColumn>
+                                <RadzenDataGridColumn Property="Cantidad" Title="Cantidad" TextAlign="Radzen.TextAlign.Center">
+                                    <EditTemplate Context="item">
+                                        <RadzenNumeric @bind-Value="item.Cantidad" Style="width: 90%; font-size: 12px;" />
+                                    </EditTemplate>
+                                </RadzenDataGridColumn>
+                                <RadzenDataGridColumn Property="Tipo" Title="Tipo" TextAlign="Radzen.TextAlign.Center">
+                                    <EditTemplate Context="item">
+                                        <RadzenTextBox @bind-Value="item.Tipo" Style="width: 90%; font-size: 12px;" />
+                                    </EditTemplate>
+                                </RadzenDataGridColumn>
+                                <RadzenDataGridColumn Context="item" Filterable="false" Sortable="false" TextAlign="Radzen.TextAlign.Center" Title="Acciones">
+
+                                    <Template Context="item">
+                                        <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Small" Click="@(args => EditRow(item))" @onclick:stopPropagation="true" />
+                                        <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Variant="Variant.Flat" Shade="Shade.Lighter" Size="ButtonSize.Small" class="ms-1" Click="@(args => ConfirmarEliminacion(item))" @onclick:stopPropagation="true" />
+                                    </Template>
+
+                                    <EditTemplate Context="item">
+                                        @if (nuevo)
+                                        {
+                                            <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Variant="Variant.Flat" Size="ButtonSize.Small" Click="@((args) => SaveNewRow(item))" aria-label="Save" />
+                                        }
+                                        else
+                                        {
+                                            <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Variant="Variant.Flat" Size="ButtonSize.Small" Click="@((args) => SaveRow(item))" aria-label="Save" />
+                                        }
+                                        <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Small" class="ms-1" Click="@((args) => CancelEdit(item))" aria-label="Cancel" />
+                                    </EditTemplate>
+
+                                </RadzenDataGridColumn>
+                            </Columns>
+                        </RadzenDataGrid>
+                    }
+ 
+                </div>
+            </div>
+        </div>
+         @* Detalle de programacion semanal *@
+        <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12 col-12">
+            <div class="card">
+                <h5 class="card-header">Programacion Faena Semanal Detalles</h5>
+                <div class="card-body">
+                    @if (spinner)
+                    {
+                        <div class="d-flex justify-content-center align-items-center">
+                            <span class="dashboard-spinner spinner-primary spinner-md"></span>
+                        </div>
+                    }
+                    else
+                    {
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="10px" class="mt-2 mb-4">
+                            <RadzenButton ButtonStyle="ButtonStyle.Success" Icon="add_circle_outline" Text="Nuevo Registro" Click="@InsertRowDetalle" />
+                        </RadzenStack>
+
+                        <RadzenDataGrid @ref="gridDetalle" AllowFiltering="true" AllowPaging="true" PageSize="5" AllowSorting="true" EditMode="DataGridEditMode.Single"
+                                        Data="@programacionCerdoDetalles" TItem="ProgramacionCerdoDetalle" RowUpdate="@OnUpdateRowDetalle" RowCreate="@OnCreateRowDetalle" GridLines="DataGridGridLines.Both">
+                            <Columns>
+                                @* <RadzenDataGridColumn Property="Id" Title="Id" Resizable="true" /> *@
+                                <RadzenDataGridColumn Property="" Title="Fecha" TextAlign="Radzen.TextAlign.Center">
+                                    <Template Context="item">
+                                        @String.Format("{0:d}", item.fecha)
+                                    </Template>
+                                    <EditTemplate Context="item">
+                                        <RadzenDatePicker @bind-Value="item.fecha" Style="width: 90%; font-size: 12px;" />
+                                    </EditTemplate>
+                                </RadzenDataGridColumn>
+                                <RadzenDataGridColumn Property="cantidad_carga" Title="Cantidad" TextAlign="Radzen.TextAlign.Center">
+                                    <EditTemplate Context="item">
+                                        <RadzenNumeric @bind-Value="item.cantidad_carga" Style="width: 90%; font-size: 12px;" />
+                                    </EditTemplate>
+                                </RadzenDataGridColumn>
+                                <RadzenDataGridColumn Property="cerdos_x_carda" Title="Cerdo x Carga" TextAlign="Radzen.TextAlign.Center">
+                                    <EditTemplate Context="item">
+                                        <RadzenNumeric @bind-Value="item.cerdos_x_carda" Style="width: 90%; font-size: 12px;" />
+                                    </EditTemplate>
+                                </RadzenDataGridColumn>
+                                <RadzenDataGridColumn Property="total" Title="Total Animales" TextAlign="Radzen.TextAlign.Center">
+                                    <EditTemplate Context="item">
+                                        <RadzenNumeric @bind-Value="item.total" Style="width: 90%; font-size: 12px;" />
+                                    </EditTemplate>
+                                </RadzenDataGridColumn>
+                                
+                                <RadzenDataGridColumn Context="item" Filterable="false" Sortable="false" TextAlign="Radzen.TextAlign.Center" Title="Acciones">
+
+                                    <Template Context="item">
+                                        <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Small" Click="@(args => EditRowDetalle(item))" @onclick:stopPropagation="true" />
+                                        <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Variant="Variant.Flat" Shade="Shade.Lighter" Size="ButtonSize.Small" class="ms-1" Click="@(args => ConfirmarEliminacionDetalle(item))" @onclick:stopPropagation="true" />
+                                    </Template>
+
+                                    <EditTemplate Context="item">
+                                        @if (nuevo)
+                                        {
+                                            <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Variant="Variant.Flat" Size="ButtonSize.Small" Click="@((args) => SaveNewRowDetalle(item))" aria-label="Save" />
+                                        }
+                                        else
+                                        {
+                                            <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Variant="Variant.Flat" Size="ButtonSize.Small" Click="@((args) => SaveRowDetalle(item))" aria-label="Save" />
+                                        }
+                                        <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Small" class="ms-1" Click="@((args) => CancelEditDetalle(item))" aria-label="Cancel" />
+                                    </EditTemplate>
+
+                                </RadzenDataGridColumn>
+                            </Columns>
+                        </RadzenDataGrid>
+                    }
+
+                </div>
+            </div>
+        </div>
+
+        @* Detalle de programacion mensual *@
+
+        <div class="col-xl-12 col-lg-12 col-md-6 col-sm-12 col-12">
+            <div class="card">
+                <h5 class="card-header">Programacion Faena Mensual</h5>
+                <div class="card-body">
+                    @if (spinner)
+                    {
+                        <div class="d-flex justify-content-center align-items-center">
+                            <span class="dashboard-spinner spinner-primary spinner-md"></span>
+                        </div>
+                    }
+                    else
+                    {
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="10px" class="mt-2 mb-4">
+                            <RadzenButton ButtonStyle="ButtonStyle.Success" Icon="add_circle_outline" Text="Nuevo Registro" Click="@InsertRowMensual" />
+                        </RadzenStack>
+
+                        <RadzenDataGrid @ref="gridMensual" AllowFiltering="true" AllowPaging="true" PageSize="5" AllowSorting="true" EditMode="DataGridEditMode.Single"
+                                        Data="@programacionCerdoMensuals" TItem="ProgramacionCerdoMensual" RowUpdate="@OnUpdateRowMensual" RowCreate="@OnCreateRowMensual" GridLines="DataGridGridLines.Both">
+                            <Columns>
+                                @* <RadzenDataGridColumn Property="Id" Title="Id" Resizable="true" /> *@
+                                <RadzenDataGridColumn Property="" Title="Fecha Ini" TextAlign="Radzen.TextAlign.Center" SortOrder="SortOrder.Descending">
+                                    <Template Context="item">
+                                        @String.Format("{0:d}", item.fecha_ini)
+                                    </Template>
+                                    <EditTemplate Context="item">
+                                        <RadzenDatePicker @bind-Value="item.fecha_ini" Style="width: 90%; font-size: 12px;" />
+                                    </EditTemplate>
+                                </RadzenDataGridColumn>
+                                <RadzenDataGridColumn Property="" Title="Fecha Fin" TextAlign="Radzen.TextAlign.Center">
+                                    <Template Context="item">
+                                        @String.Format("{0:d}", item.fecha_fin)
+                                    </Template>
+                                    <EditTemplate Context="item">
+                                        <RadzenDatePicker @bind-Value="item.fecha_fin" Style="width: 90%; font-size: 12px;" />
+                                    </EditTemplate>
+                                </RadzenDataGridColumn>
+                                <RadzenDataGridColumn Property="semana_anho" Title="Semana" TextAlign="Radzen.TextAlign.Center">
+                                    <EditTemplate Context="item">
+                                        <RadzenTextBox @bind-Value="item.semana_anho" Style="width: 90%; font-size: 12px;" />
+                                    </EditTemplate>
+                                </RadzenDataGridColumn>
+
+                                <RadzenDataGridColumn Property="cant_animales" Title="Cant.Animales" TextAlign="Radzen.TextAlign.Center">
+                                    <EditTemplate Context="item">
+                                        <RadzenNumeric @bind-Value="item.cant_animales" Style="width: 90%; font-size: 12px;" />
+                                    </EditTemplate>
+                                </RadzenDataGridColumn>
+                                <RadzenDataGridColumn Property="cant_cargas" Title="Cargas" TextAlign="Radzen.TextAlign.Center">
+                                    <EditTemplate Context="item">
+                                        <RadzenNumeric @bind-Value="item.cant_cargas" Style="width: 90%; font-size: 12px;" />
+                                    </EditTemplate>
+                                </RadzenDataGridColumn>
+
+                                <RadzenDataGridColumn Property="novex" Title="Novex" TextAlign="Radzen.TextAlign.Center">
+                                    <EditTemplate Context="item">
+                                        <RadzenNumeric @bind-Value="item.novex" Style="width: 90%; font-size: 12px;" />
+                                    </EditTemplate>
+                                </RadzenDataGridColumn>
+                                <RadzenDataGridColumn Property="pirayu" Title="Pirayu" TextAlign="Radzen.TextAlign.Center">
+                                    <EditTemplate Context="item">
+                                        <RadzenNumeric @bind-Value="item.pirayu" Style="width: 90%; font-size: 12px;" />
+                                    </EditTemplate>
+                                </RadzenDataGridColumn>
+                                <RadzenDataGridColumn Property="itabo" Title="Itabo" TextAlign="Radzen.TextAlign.Center">
+                                    <EditTemplate Context="item">
+                                        <RadzenNumeric @bind-Value="item.itabo" Style="width: 90%; font-size: 12px;" />
+                                    </EditTemplate>
+                                </RadzenDataGridColumn>
+                            
+
+                                <RadzenDataGridColumn Context="item" Filterable="false" Sortable="false" TextAlign="Radzen.TextAlign.Center" Title="Acciones">
+
+                                    <Template Context="item">
+                                        <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Small" Click="@(args => EditRowMensual(item))" @onclick:stopPropagation="true" />
+                                        <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Variant="Variant.Flat" Shade="Shade.Lighter" Size="ButtonSize.Small" class="ms-1" Click="@(args => ConfirmarEliminacionMensual(item))" @onclick:stopPropagation="true" />
+                                    </Template>
+
+                                    <EditTemplate Context="item">
+                                        @if (nuevo)
+                                        {
+                                            <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Variant="Variant.Flat" Size="ButtonSize.Small" Click="@((args) => SaveNewRowMensual(item))" aria-label="Save" />
+                                        }
+                                        else
+                                        {
+                                            <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Variant="Variant.Flat" Size="ButtonSize.Small" Click="@((args) => SaveRowMensual(item))" aria-label="Save" />
+                                        }
+                                        <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Small" class="ms-1" Click="@((args) => CancelEditMensual(item))" aria-label="Cancel" />
+                                    </EditTemplate>
+
+                                </RadzenDataGridColumn>
+                            </Columns>
+                        </RadzenDataGrid>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<ProgramacionCargaCerdos> programacionCargaCerdos = new List<ProgramacionCargaCerdos>();
+    private List<ProgramacionCerdoDetalle> programacionCerdoDetalles = new List<ProgramacionCerdoDetalle>();
+    private List<ProgramacionCerdoMensual> programacionCerdoMensuals = new List<ProgramacionCerdoMensual>();
+
+    private RadzenDataGrid<ProgramacionCargaCerdos>? grid;
+    private RadzenDataGrid<ProgramacionCerdoDetalle>? gridDetalle;
+    private RadzenDataGrid<ProgramacionCerdoMensual>? gridMensual;
+
+    private bool nuevo = false;
+    private bool spinner = true;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            programacionCargaCerdos = await Http.GetFromJsonAsync<List<ProgramacionCargaCerdos>>("api/adicional/programacioncarga");
+            programacionCerdoDetalles = await Http.GetFromJsonAsync<List<ProgramacionCerdoDetalle>>("api/adicional/programaciondetalle");
+            programacionCerdoMensuals = await Http.GetFromJsonAsync<List<ProgramacionCerdoMensual>>("api/adicional/programacionmensual");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al cargar datos: {ex.Message}");
+        }
+        finally
+        {
+            spinner = false;
+        }
+    }
+
+    private async Task ConfirmarEliminacion(ProgramacionCargaCerdos item)
+    {
+        var result = await sweetAlertService.FireAsync(new SweetAlertOptions
+            {
+                Title = "Confirmacion",
+                Text = "Deseas eliminar el registro?",
+                Icon = SweetAlertIcon.Warning,
+                ConfirmButtonText = "Sí",
+                ShowCancelButton = true,
+                CancelButtonText = "No",
+                ConfirmButtonColor = "#d33",
+                CancelButtonColor = "#3085d6",
+                FocusConfirm = false
+            });
+
+        if (result.IsConfirmed)
+        {
+            await EliminarItem(item);
+        }
+
+    }
+
+    private async Task EliminarItem(ProgramacionCargaCerdos item)
+    {
+        Console.WriteLine("EliminarItem llamado");
+        await Http.DeleteAsync($"api/adicional/programacioncarga/{item.Id}");
+        programacionCargaCerdos.Remove(item);
+        //NotificationService.Notify(NotificationSeverity.Success, "Éxito", "Registro eliminado con éxito");
+        await grid.Reload();
+    }
+
+    async Task EditRow(ProgramacionCargaCerdos item)
+    {
+        await grid.EditRow(item);
+    }
+
+    async Task SaveRow(ProgramacionCargaCerdos item)
+    {
+        await grid.UpdateRow(item);
+        await GuardarItem(item);
+    }
+
+    async Task SaveNewRow(ProgramacionCargaCerdos item)
+    {
+        await grid.UpdateRow(item);
+        await NuevoItem(item);
+    }
+
+    void CancelEdit(ProgramacionCargaCerdos item)
+    {
+        grid.CancelEditRow(item);
+    }
+
+    void OnUpdateRow(ProgramacionCargaCerdos item)
+    {
+        GuardarItem(item);
+        //NuevoItem(item);
+    }
+
+    void OnCreateRow(ProgramacionCargaCerdos item)
+    {
+        programacionCargaCerdos.Add(item);
+    }
+
+    async Task InsertRow()
+    {
+        nuevo = true;
+        var newItem = new ProgramacionCargaCerdos();
+        programacionCargaCerdos.Add(newItem);
+        await grid.InsertRow(newItem);
+    }
+
+    async Task GuardarItem(ProgramacionCargaCerdos item)
+    {
+        try
+        {
+            var response = await Http.PutAsJsonAsync($"api/adicional/programacioncarga/{item.Id}", item);
+            if (response.IsSuccessStatusCode)
+            {
+                var success = await sweetAlertService.FireAsync(new SweetAlertOptions
+                    {
+                        Title = "Exito",
+                        Text = "Registro guardado.",
+                        Icon = SweetAlertIcon.Success,
+                        ShowConfirmButton = true,
+                        ShowCancelButton = false,
+                        FocusConfirm = true
+                    });
+            }
+            else
+            {
+                var error = await sweetAlertService.FireAsync(new SweetAlertOptions
+                    {
+                        Title = "Error",
+                        Text = "Registro no guardado.",
+                        Icon = SweetAlertIcon.Error,
+                        ShowConfirmButton = true,
+                        ShowCancelButton = false,
+                        ConfirmButtonColor = "#d33",
+                        FocusConfirm = true
+                    });
+            }
+        }
+        catch (Exception ex)
+        {
+            var error = await sweetAlertService.FireAsync(new SweetAlertOptions
+                {
+                    Title = "Error",
+                    Text = ex.Message,
+                    Icon = SweetAlertIcon.Error,
+                    ShowConfirmButton = true,
+                    ShowCancelButton = false,
+                    ConfirmButtonColor = "#d33",
+                    FocusConfirm = true
+                });
+        }
+    }
+
+    async Task NuevoItem(ProgramacionCargaCerdos item)
+    {
+        try
+        {
+            var response = await Http.PostAsJsonAsync("api/adicional/programacioncarga/", item);
+            if (response.IsSuccessStatusCode)
+            {
+                var success = await sweetAlertService.FireAsync(new SweetAlertOptions
+                    {
+                        Title = "Exito",
+                        Text = "Registro guardado.",
+                        Icon = SweetAlertIcon.Success,
+                        ShowConfirmButton = true,
+                        ShowCancelButton = false,
+                        FocusConfirm = true
+                });
+                programacionCargaCerdos = await Http.GetFromJsonAsync<List<ProgramacionCargaCerdos>>("api/adicional/programacioncarga");
+            }
+            else
+            {
+                var error = await sweetAlertService.FireAsync(new SweetAlertOptions
+                    {
+                        Title = "Error",
+                        Text = "Registro no guardado.",
+                        Icon = SweetAlertIcon.Error,
+                        ShowConfirmButton = true,
+                        ShowCancelButton = false,
+                        ConfirmButtonColor = "#d33",
+                        FocusConfirm = true
+                });
+            }
+
+        }
+        catch (Exception ex)
+        {
+            var error = await sweetAlertService.FireAsync(new SweetAlertOptions
+                {
+                    Title = "Error",
+                    Text = ex.Message,
+                    Icon = SweetAlertIcon.Error,
+                    ShowConfirmButton = true,
+                    ShowCancelButton = false,
+                    ConfirmButtonColor = "#d33",
+                    FocusConfirm = true
+                });
+
+        }
+        nuevo = false;
+    }
+
+    //hasta aca es programacion normal
+
+    private async Task ConfirmarEliminacionDetalle(ProgramacionCerdoDetalle item)
+    {
+        var result = await sweetAlertService.FireAsync(new SweetAlertOptions
+            {
+                Title = "Confirmacion",
+                Text = "Deseas eliminar el registro?",
+                Icon = SweetAlertIcon.Warning,
+                ConfirmButtonText = "Sí",
+                ShowCancelButton = true,
+                CancelButtonText = "No",
+                ConfirmButtonColor = "#d33",
+                CancelButtonColor = "#3085d6",
+                FocusConfirm = false
+            });
+
+        if (result.IsConfirmed)
+        {
+            await EliminarItemDetalle(item);
+        }
+
+    }
+
+    private async Task EliminarItemDetalle(ProgramacionCerdoDetalle item)
+    {
+        await Http.DeleteAsync($"api/adicional/programaciondetalle/{item.Id}");
+        programacionCerdoDetalles.Remove(item);
+        //NotificationService.Notify(NotificationSeverity.Success, "Éxito", "Registro eliminado con éxito");
+        await gridDetalle.Reload();
+    }
+
+    async Task EditRowDetalle(ProgramacionCerdoDetalle item)
+    {
+        await gridDetalle.EditRow(item);
+    }
+
+    async Task SaveRowDetalle(ProgramacionCerdoDetalle item)
+    {
+        await gridDetalle.UpdateRow(item);
+        await GuardarItemDetalle(item);
+    }
+
+    async Task SaveNewRowDetalle(ProgramacionCerdoDetalle item)
+    {
+        await gridDetalle.UpdateRow(item);
+        await NuevoItemDetalle(item);
+    }
+
+    void CancelEditDetalle(ProgramacionCerdoDetalle item)
+    {
+        gridDetalle.CancelEditRow(item);
+    }
+
+    void OnUpdateRowDetalle(ProgramacionCerdoDetalle item)
+    {
+        GuardarItemDetalle(item);
+    }
+
+    void OnCreateRowDetalle(ProgramacionCerdoDetalle item)
+    {
+        programacionCerdoDetalles.Add(item);
+    }
+
+    async Task InsertRowDetalle()
+    {
+        nuevo = true;
+        var newItem = new ProgramacionCerdoDetalle();
+        programacionCerdoDetalles.Add(newItem);
+        await gridDetalle.InsertRow(newItem);
+    }
+
+    async Task GuardarItemDetalle(ProgramacionCerdoDetalle item)
+    {
+        try
+        {
+            var response = await Http.PutAsJsonAsync($"api/adicional/programaciondetalle/{item.Id}", item);
+            if (response.IsSuccessStatusCode)
+            {
+                var success = await sweetAlertService.FireAsync(new SweetAlertOptions
+                    {
+                        Title = "Exito",
+                        Text = "Registro guardado.",
+                        Icon = SweetAlertIcon.Success,
+                        ShowConfirmButton = true,
+                        ShowCancelButton = false,
+                        FocusConfirm = true
+                    });
+            }
+            else
+            {
+                var error = await sweetAlertService.FireAsync(new SweetAlertOptions
+                    {
+                        Title = "Error",
+                        Text = "Registro no guardado.",
+                        Icon = SweetAlertIcon.Error,
+                        ShowConfirmButton = true,
+                        ShowCancelButton = false,
+                        ConfirmButtonColor = "#d33",
+                        FocusConfirm = true
+                    });
+            }
+        }
+        catch (Exception ex)
+        {
+            var error = await sweetAlertService.FireAsync(new SweetAlertOptions
+                {
+                    Title = "Error",
+                    Text = ex.Message,
+                    Icon = SweetAlertIcon.Error,
+                    ShowConfirmButton = true,
+                    ShowCancelButton = false,
+                    ConfirmButtonColor = "#d33",
+                    FocusConfirm = true
+                });
+        }
+    }
+
+    async Task NuevoItemDetalle(ProgramacionCerdoDetalle item)
+    {
+        try
+        {
+            var response = await Http.PostAsJsonAsync("api/adicional/programaciondetalle/", item);
+            if (response.IsSuccessStatusCode)
+            {
+                var success = await sweetAlertService.FireAsync(new SweetAlertOptions
+                    {
+                        Title = "Exito",
+                        Text = "Registro guardado.",
+                        Icon = SweetAlertIcon.Success,
+                        ShowConfirmButton = true,
+                        ShowCancelButton = false,
+                        FocusConfirm = true
+                    });
+                programacionCerdoDetalles = await Http.GetFromJsonAsync<List<ProgramacionCerdoDetalle>>("api/adicional/programaciondetalle");
+            }
+            else
+            {
+                var error = await sweetAlertService.FireAsync(new SweetAlertOptions
+                    {
+                        Title = "Error",
+                        Text = "Registro no guardado.",
+                        Icon = SweetAlertIcon.Error,
+                        ShowConfirmButton = true,
+                        ShowCancelButton = false,
+                        ConfirmButtonColor = "#d33",
+                        FocusConfirm = true
+                    });
+            }
+
+        }
+        catch (Exception ex)
+        {
+            var error = await sweetAlertService.FireAsync(new SweetAlertOptions
+                {
+                    Title = "Error",
+                    Text = ex.Message,
+                    Icon = SweetAlertIcon.Error,
+                    ShowConfirmButton = true,
+                    ShowCancelButton = false,
+                    ConfirmButtonColor = "#d33",
+                    FocusConfirm = true
+                });
+
+        }
+        nuevo = false;
+    }
+
+    //hasta aca detalle
+
+    private async Task ConfirmarEliminacionMensual(ProgramacionCerdoMensual item)
+    {
+        var result = await sweetAlertService.FireAsync(new SweetAlertOptions
+            {
+                Title = "Confirmacion",
+                Text = "Deseas eliminar el registro?",
+                Icon = SweetAlertIcon.Warning,
+                ConfirmButtonText = "Sí",
+                ShowCancelButton = true,
+                CancelButtonText = "No",
+                ConfirmButtonColor = "#d33",
+                CancelButtonColor = "#3085d6",
+                FocusConfirm = false
+            });
+
+        if (result.IsConfirmed)
+        {
+            await EliminarItemMensual(item);
+        }
+
+    }
+
+    private async Task EliminarItemMensual(ProgramacionCerdoMensual item)
+    {
+        await Http.DeleteAsync($"api/adicional/programacionmensual/{item.id}");
+        programacionCerdoMensuals.Remove(item);
+        //NotificationService.Notify(NotificationSeverity.Success, "Éxito", "Registro eliminado con éxito");
+        await gridMensual.Reload();
+    }
+
+    async Task EditRowMensual(ProgramacionCerdoMensual item)
+    {
+        await gridMensual.EditRow(item);
+    }
+
+    async Task SaveRowMensual(ProgramacionCerdoMensual item)
+    {
+        await gridMensual.UpdateRow(item);
+        await GuardarItemMensual(item);
+    }
+
+    async Task SaveNewRowMensual(ProgramacionCerdoMensual item)
+    {
+        await gridMensual.UpdateRow(item);
+        await NuevoItemMensual(item);
+    }
+
+    void CancelEditMensual(ProgramacionCerdoMensual item)
+    {
+        gridMensual.CancelEditRow(item);
+    }
+
+    void OnUpdateRowMensual(ProgramacionCerdoMensual item)
+    {
+        GuardarItemMensual(item);
+    }
+
+    void OnCreateRowMensual(ProgramacionCerdoMensual item)
+    {
+        programacionCerdoMensuals.Add(item);
+    }
+
+    async Task InsertRowMensual()
+    {
+        nuevo = true;
+        var newItem = new ProgramacionCerdoMensual();
+        programacionCerdoMensuals.Add(newItem);
+        await gridMensual.InsertRow(newItem);
+    }
+
+    async Task GuardarItemMensual(ProgramacionCerdoMensual item)
+    {
+        try
+        {
+            var response = await Http.PutAsJsonAsync($"api/adicional/programacionmensual/{item.id}", item);
+            if (response.IsSuccessStatusCode)
+            {
+                var success = await sweetAlertService.FireAsync(new SweetAlertOptions
+                    {
+                        Title = "Exito",
+                        Text = "Registro guardado.",
+                        Icon = SweetAlertIcon.Success,
+                        ShowConfirmButton = true,
+                        ShowCancelButton = false,
+                        FocusConfirm = true
+                    });
+            }
+            else
+            {
+                var error = await sweetAlertService.FireAsync(new SweetAlertOptions
+                    {
+                        Title = "Error",
+                        Text = "Registro no guardado.",
+                        Icon = SweetAlertIcon.Error,
+                        ShowConfirmButton = true,
+                        ShowCancelButton = false,
+                        ConfirmButtonColor = "#d33",
+                        FocusConfirm = true
+                    });
+            }
+        }
+        catch (Exception ex)
+        {
+            var error = await sweetAlertService.FireAsync(new SweetAlertOptions
+                {
+                    Title = "Error",
+                    Text = ex.Message,
+                    Icon = SweetAlertIcon.Error,
+                    ShowConfirmButton = true,
+                    ShowCancelButton = false,
+                    ConfirmButtonColor = "#d33",
+                    FocusConfirm = true
+                });
+        }
+    }
+
+    async Task NuevoItemMensual(ProgramacionCerdoMensual item)
+    {
+        try
+        {
+            var response = await Http.PostAsJsonAsync("api/adicional/programacionmensual/", item);
+            if (response.IsSuccessStatusCode)
+            {
+                var success = await sweetAlertService.FireAsync(new SweetAlertOptions
+                    {
+                        Title = "Exito",
+                        Text = "Registro guardado.",
+                        Icon = SweetAlertIcon.Success,
+                        ShowConfirmButton = true,
+                        ShowCancelButton = false,
+                        FocusConfirm = true
+                    });
+                programacionCerdoMensuals = await Http.GetFromJsonAsync<List<ProgramacionCerdoMensual>>("api/adicional/programacionmensual");
+            }
+            else
+            {
+                var error = await sweetAlertService.FireAsync(new SweetAlertOptions
+                    {
+                        Title = "Error",
+                        Text = "Registro no guardado.",
+                        Icon = SweetAlertIcon.Error,
+                        ShowConfirmButton = true,
+                        ShowCancelButton = false,
+                        ConfirmButtonColor = "#d33",
+                        FocusConfirm = true
+                    });
+            }
+
+        }
+        catch (Exception ex)
+        {
+            var error = await sweetAlertService.FireAsync(new SweetAlertOptions
+                {
+                    Title = "Error",
+                    Text = ex.Message,
+                    Icon = SweetAlertIcon.Error,
+                    ShowConfirmButton = true,
+                    ShowCancelButton = false,
+                    ConfirmButtonColor = "#d33",
+                    FocusConfirm = true
+                });
+
+        }
+        nuevo = false;
+    }
+
+    void OnSort(DataGridColumnSortEventArgs<ProgramacionCerdoMensual> args)
+    {
+        //
+    }
+}

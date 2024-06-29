@@ -1,0 +1,109 @@
+﻿@page "/ventas/transferencias"
+@using PYGS.Shared.DTOs.Hana
+@using System.Globalization
+@inject SweetAlertService sweetAlertService
+@inject HttpClient Http
+@inject NotificationService NotificationService
+@inject NavigationManager Navigation
+
+
+<div class="container-fluid  dashboard-content">
+    <div class="row">
+        <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-12">
+            <div class="page-header">
+                <h2 class="pageheader-title">Remisiones / Transferencias de Stock Granja</h2>
+                <p class="pageheader-text">Proin placerat ante duiullam scelerisque a velit ac porta, fusce sit amet vestibulum mi. Morbi lobortis pulvinar quam.</p>
+                <div class="page-breadcrumb">
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="/" class="breadcrumb-link">Home</a></li>
+                            <li class="breadcrumb-item"><a href="#" class="breadcrumb-link">Ventas</a></li>
+                            <li class="breadcrumb-item active" aria-current="page">Remision/Transferencias</li>
+                        </ol>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-xl-12 col-lg-12 col-md-6 col-sm-12 col-12">
+            <div class="card">
+                <h5 class="card-header">Listado de Remisiones (Granja)</h5>
+                <div class="card-body">
+                    @if (spinner)
+                    {
+                        <div class="d-flex justify-content-center align-items-center">
+                            <span class="dashboard-spinner spinner-primary spinner-md"></span>
+                        </div>
+                    }
+                    else
+                    {
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="10px" class="mt-2 mb-4">
+                            <RadzenButton ButtonStyle="ButtonStyle.Success" Icon="add_circle_outline" Text="Nueva Remision" Click="@RedirectToPage" />
+                        </RadzenStack>
+
+                        <RadzenDataGrid @ref="grid" AllowFiltering="true" AllowPaging="true" PageSize="15" AllowSorting="true"
+                                    Data="@remisionesDTos" TItem="RemisionesDTo" GridLines="DataGridGridLines.Both" AllowColumnResize="true" AllowColumnReorder="true">
+                            <Columns>
+                            <RadzenDataGridColumn Property="DocNum" Title="Nro.SAP" TextAlign="Radzen.TextAlign.Center">
+                            </RadzenDataGridColumn>
+                            <RadzenDataGridColumn Property="DocDate" Title="Fecha" TextAlign="Radzen.TextAlign.Center">
+                                <Template Context="item">
+                                    @String.Format("{0:d}", item.DocDate)
+                                </Template>
+                            </RadzenDataGridColumn>
+                            <RadzenDataGridColumn Property="NROREM" Title="Nro.Remision" TextAlign="Radzen.TextAlign.Center">
+                            </RadzenDataGridColumn>
+                            <RadzenDataGridColumn Property="CardName" Title="Cliente" TextAlign="Radzen.TextAlign.Center">
+                            </RadzenDataGridColumn>
+                            <RadzenDataGridColumn Property="ANIMALES" Title="Cant. Animales" TextAlign="Radzen.TextAlign.Center">
+                                <Template Context="item">
+                                    @String.Format("{0:N0}", item.ANIMALES)
+                                </Template>
+                            </RadzenDataGridColumn>
+                            <RadzenDataGridColumn Property="PESO" Title="Total Peso" TextAlign="Radzen.TextAlign.Center">
+                                <Template Context="item">
+                                    @String.Format("{0:N2}", item.PESO)
+                                </Template>
+                            </RadzenDataGridColumn>
+                            </Columns>
+                        </RadzenDataGrid>
+
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<RemisionesDTo> remisionesDTos = new List<RemisionesDTo>();
+    private RadzenDataGrid<RemisionesDTo>? grid;
+
+    private bool spinner = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var cultureInfo = new CultureInfo("es-ES");
+        CultureInfo.DefaultThreadCurrentCulture = cultureInfo;
+        CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
+
+        try
+        {
+            remisionesDTos = await Http.GetFromJsonAsync<List<RemisionesDTo>>("api/hana/remisionesgranja");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al cargar datos: {ex.Message}");
+        }
+        finally
+        {
+            spinner = false;
+        }
+    }
+
+    private void RedirectToPage()
+    {
+        Navigation.NavigateTo("/ventas/transferencias/nuevo");
+    }
+}

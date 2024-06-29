@@ -1,0 +1,50 @@
+﻿<div class="col-xl-4 col-lg-12 col-md-12 col-sm-12 col-12">
+    <div class="card card-fluid">
+        <div class="card-body">
+            <div>
+                @if (imageBase64 is not null)
+                {
+                   <div class="media align-items-center">
+                        <img src="data:image/jpeg;base64, @imageBase64" class="rounded-circle user-avatar-xl" />
+                    </div>
+                }
+
+                @if (ImageURL is not null)
+                {
+                    <div class="media align-items-center">
+                        <img src="@ImageURL" class="rounded-circle user-avatar-xl" />
+                    </div>
+                }
+            </div>
+            <br />
+            <div>
+                @* <label>@Label</label> *@
+                <div>
+                    <InputFile class="input-group mb-3" OnChange="OnChange" accept=".jpg,.jpeg,.png" />
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public string Label { get; set; } = "Imagen";
+    [Parameter] public string? ImageURL { get; set; }
+    [Parameter] public EventCallback<string> ImageSelected { get; set; }
+    private string? imageBase64;
+
+    async Task OnChange(InputFileChangeEventArgs e)
+    {
+        var imagenes = e.GetMultipleFiles();
+
+        foreach (var imagen in imagenes)
+        {
+            var arrBytes = new byte[imagen.Size];
+            await imagen.OpenReadStream().ReadAsync(arrBytes);
+            imageBase64 = Convert.ToBase64String(arrBytes);
+            ImageURL = null;
+            await ImageSelected.InvokeAsync(imageBase64);
+            StateHasChanged();
+        }
+    }
+}

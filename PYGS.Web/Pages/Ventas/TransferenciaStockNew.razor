@@ -1,0 +1,183 @@
+﻿@page "/ventas/transferencias/nuevo"
+@using PYGS.Shared.DTOs.Hana
+@inject HttpClient Http
+
+<div class="container-fluid  dashboard-content">
+    <div class="row">
+        <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-12">
+            <div class="page-header">
+                <h2 class="pageheader-title">Remisiones / Transferencias de Stock Granja</h2>
+                <p class="pageheader-text">Proin placerat ante duiullam scelerisque a velit ac porta, fusce sit amet vestibulum mi. Morbi lobortis pulvinar quam.</p>
+                <div class="page-breadcrumb">
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="/" class="breadcrumb-link">Home</a></li>
+                            <li class="breadcrumb-item"><a href="#" class="breadcrumb-link">Ventas</a></li>
+                            <li class="breadcrumb-item"><a href="/ventas/transferencias" class="breadcrumb-link">Remisiones</a></li>
+                            <li class="breadcrumb-item active" aria-current="page">Nueva Remision/Transf.</li>
+                        </ol>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="offset-xl-2 col-xl-8 col-lg-12 col-md-12 col-sm-12 col-12">
+            <div class="card">
+                <div class="card-header p-4">
+                    <a class="pt-2 d-inline-block" href="#">Transferencia de Stock</a>
+                    <div class="float-right">
+                        @* <h3 class="mb-0">Invoice #1</h3>
+                        Date: 3 Dec, 2020 *@
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-sm-6">
+                            <RadzenLabel Text="Datos del Cliente: " Style="margin-bottom 15px; vertical-align: middle; font-weight:100" />
+                            <div style="margin-top: 30px;">
+                                <RadzenLabel Text="Codigo: " Component="DropDownDataGridChangeEvent" Style="margin-right: 8px; vertical-align: middle;" />
+                                <RadzenTextBox @bind-Value=@codigoCliente Style="width: 100%; max-width: 270px;" Placeholder="Código del cliente" ReadOnly="true" />
+                            </div>
+                            <div style="margin-top: 10px;">
+                                <RadzenLabel Text="Cliente: " Component="DropDownDataGridChangeEvent" Style="margin-right: 8px; vertical-align: middle;" />
+                                <RadzenDropDownDataGrid @bind-Value=@selectedCliente
+                                                        Data=@clientes
+                                                        TextProperty="@nameof(ClientesDTO.CardName)"
+                                                        ValueProperty="@nameof(ClientesDTO.CardCode)"
+                                                        Name="DropDownDataGridClientes"
+                                                        FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                                        AllowClear="true"
+                                                        Placeholder="Seleccione un cliente"
+                                                        Style="width: 100%; max-width: 270px;"
+                                                        Change="@OnClienteChange">
+                                    <Columns>
+                                        <RadzenDropDownDataGridColumn Property="CardCode" Title="Código" Width="90px" />
+                                        <RadzenDropDownDataGridColumn Property="CardName" Title="Nombre" Width="230px" />
+                                    </Columns>
+                                </RadzenDropDownDataGrid>
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <h2>Fecha y eso</h2>    
+                        </div>
+                    </div>
+
+                    <RadzenButton Text="Nuevo Item" Icon="add_circle_outline" ButtonStyle="ButtonStyle.Success" class="my-3" Click="@InsertRow" />
+
+                    <RadzenDataGrid @ref="grid" Data="@remisionesDs" AllowFiltering="true" AllowPaging="true" PageSize="10" AllowSorting="true" GridLines="DataGridGridLines.Both" AllowColumnResize="true" AllowColumnReorder="true">
+                        <Columns>
+                            <RadzenDataGridColumn TItem="RemisionesD" Property="@nameof(RemisionesD.ItemCode)" Title="Codigo" Width="170px" TextAlign="Radzen.TextAlign.Center">
+                                <EditTemplate Context="item">
+                                    <RadzenDropDownDataGrid @bind-Value="item.ItemCode" Data="@articulos" TextProperty="ItemCode" ValueProperty="ItemCode" Style="width: 90%; font-size: 13px;"
+                                                            Change="@(args => OnArticuloChanged(args, item))">
+                                        <Columns>
+                                            <RadzenDropDownDataGridColumn Property="ItemCode" Title="Código" Width="90px" />
+                                            <RadzenDropDownDataGridColumn Property="ItemName" Title="Nombre" Width="230px" />
+                                        </Columns>
+                                    </RadzenDropDownDataGrid>
+                                </EditTemplate>
+                            </RadzenDataGridColumn>
+                            <RadzenDataGridColumn TItem="RemisionesD" Property="ItemName" Title="Nombre Articulo">
+                                <EditTemplate Context="item">
+                                    <RadzenDropDownDataGrid @bind-Value="item.ItemName" Data="@articulos" TextProperty="ItemName" ValueProperty="ItemName" Style="width: 90%; font-size: 12px;"
+                                                            Change="@(args => OnArticuloChanged(args, item))" >
+                                        <Columns>
+                                            <RadzenDropDownDataGridColumn Property="ItemCode" Title="Código" Width="90px" />
+                                            <RadzenDropDownDataGridColumn Property="ItemName" Title="Nombre" Width="230px" />
+                                        </Columns>
+                                    </RadzenDropDownDataGrid>
+                                </EditTemplate>
+                            </RadzenDataGridColumn>
+                            <RadzenDataGridColumn Property="@nameof(RemisionesD.FromWhsCod)" Title="Origen">
+                                <EditTemplate Context="item">
+                                    <RadzenTextBox @bind-Value="item.FromWhsCod" Style="width: 90%; font-size: 12px;" />
+                                </EditTemplate>
+                            </RadzenDataGridColumn>
+                            <RadzenDataGridColumn Property="@nameof(RemisionesD.ToWhsCod)" Title="Destino">
+                                <EditTemplate Context="item">
+                                    <RadzenTextBox @bind-Value="item.ToWhsCod" Style="width: 90%; font-size: 12px;" />
+                                </EditTemplate>
+                            </RadzenDataGridColumn>
+                            <RadzenDataGridColumn Property="@nameof(RemisionesD.cantidad)" Title="Cantidad" FormatString="{0:N0}">
+                                <EditTemplate Context="item">
+                                    <RadzenNumeric @bind-Value="item.cantidad" Style="width: 90%; font-size: 12px;"/>
+                                </EditTemplate>
+                            </RadzenDataGridColumn>
+                            <RadzenDataGridColumn Property="@nameof(RemisionesD.pesocategoria)" Title="Peso x Categoria" FormatString="{0:N0}">
+                                <EditTemplate Context="item">
+                                    <RadzenNumeric @bind-Value="item.pesocategoria" Style="width: 90%; font-size: 12px;" />
+                                </EditTemplate>
+                            </RadzenDataGridColumn>
+                             <RadzenDataGridColumn Context="item" Filterable="false" Sortable="false" TextAlign="Radzen.TextAlign.Center">
+                                  <Template Context="item">
+                                    <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Variant="Variant.Flat" Size="ButtonSize.Small" aria-label="Save" />
+                                    <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Small" class="ms-1" aria-label="Cancel" />
+                                  </Template>
+                             </RadzenDataGridColumn>
+                        </Columns>
+                    </RadzenDataGrid>
+                    <div style="display: flex; justify-content: flex-end;">
+                        <RadzenButton Text="Guardar" Icon="verified" ButtonStyle="ButtonStyle.Secondary" class="my-3 mx-2" />
+                        <RadzenButton Text="Imprimir" Icon="print" ButtonStyle="ButtonStyle.Warning" class="my-3" />
+                    </div>
+                    
+             </div>
+        </div>
+    </div>
+    </div>
+</div>
+@code {
+    private List<ClientesDTO>? clientes = new List<ClientesDTO>();
+    private List<RemisionesD> remisionesDs = new List<RemisionesD>();
+    private List<ArticuloDTO>? articulos;
+
+    private RadzenDropDownDataGrid<RemisionesD>? clientesDropDown;
+    private RadzenDataGrid<RemisionesD>? grid;
+    string emptyText = "No existe datos para mostrar!";
+    private string? selectedCliente;
+    private string? codigoCliente;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            articulos = await Http.GetFromJsonAsync<List<ArticuloDTO>>("api/hana/articulos");
+            clientes = await Http.GetFromJsonAsync<List<ClientesDTO>>("api/hana/clientes");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al cargar datos: {ex.Message}");
+        }
+    }
+
+    private void OnClienteChange(object value)
+    {
+        selectedCliente = value.ToString()!;
+        var clienteSeleccionado = clientes!.FirstOrDefault(c => c.CardCode == selectedCliente);
+        if (clienteSeleccionado != null)
+        {
+            codigoCliente = clienteSeleccionado.CardCode!;
+        }
+    }
+
+    private void OnArticuloChanged(object value, RemisionesD item)
+    {
+        var selectedArticulo = articulos!.FirstOrDefault(a => a.ItemCode == value.ToString() || a.ItemName == value.ToString());
+        if (selectedArticulo != null)
+        {
+            item.ItemCode = selectedArticulo.ItemCode!;
+            item.ItemName = selectedArticulo.ItemName!;
+        }
+    }
+
+    async Task InsertRow()
+    {
+        var newItem = new RemisionesD();
+        remisionesDs.Add(newItem);
+        await grid!.InsertRow(newItem);
+    }
+
+    
+    
+}
