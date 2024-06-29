@@ -23,6 +23,7 @@ namespace PYGS.Api.Data
             await CheckCategoriesAsync();
             await CheckCiudadAsync();
             await CheckRolesAsync();
+            await CheckArticulosAsync();
             await CheckUserAsync("2672152", "Christian", "Morales", "christian@yopmail.com", "0981612950", "Judas Tadeo y Victor Alfiere", UserType.Admin);
         }
 
@@ -38,6 +39,20 @@ namespace PYGS.Api.Data
             {
                 _context.Ciudades.Add(new Ciudad { Name = "Asuncion" });
                 _context.Ciudades.Add(new Ciudad { Name = "Lambare" });
+
+
+                await _context.SaveChangesAsync();
+            }
+        }
+
+        private async Task CheckArticulosAsync()
+        {
+            if (!_context.Articulos.Any())
+            {
+                _context.Articulos.Add(new Articulo { Codigo = "A0012345",  Nombre = "Costilla", impuesto = "IVA_5" });
+                _context.Articulos.Add(new Articulo { Codigo = "A0012346", Nombre = "Vacio", impuesto = "IVA_5" });
+                _context.Articulos.Add(new Articulo { Codigo = "A0012347", Nombre = "Pierna con hueso", impuesto = "IVA_5" });
+                _context.Articulos.Add(new Articulo { Codigo = "A0012348", Nombre = "Paleta", impuesto = "IVA_5" });
 
 
                 await _context.SaveChangesAsync();

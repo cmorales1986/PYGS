@@ -1,0 +1,313 @@
+﻿@page "/adicional/agriness/terminacion"
+@inject SweetAlertService sweetAlertService
+@inject HttpClient Http
+@inject NotificationService NotificationService
+@using System.Net.Http.Json
+
+<div class="container-fluid  dashboard-content">
+    <div class="row">
+        <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-12">
+            <div class="page-header">
+                <h2 class="pageheader-title">Atualizacion Datos Agriness Terminacion </h2>
+                <p class="pageheader-text">Proin placerat ante duiullam scelerisque a velit ac porta, fusce sit amet vestibulum mi. Morbi lobortis pulvinar quam.</p>
+                <div class="page-breadcrumb">
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="/" class="breadcrumb-link">Home</a></li>
+                            <li class="breadcrumb-item"><a href="#" class="breadcrumb-link">Agriness</a></li>
+                            <li class="breadcrumb-item active" aria-current="page">Terminacion</li>
+                        </ol>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-xl-12 col-lg-12 col-md-6 col-sm-12 col-12">
+            <div class="card">
+                <h5 class="card-header">Datos Terminacion</h5>
+                <div class="card-body">
+                    @if (spinner)
+                    {
+                        <div class="d-flex justify-content-center align-items-center">
+                            <span class="dashboard-spinner spinner-primary spinner-md"></span>
+                        </div>
+                    }
+                    else
+                    {
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="10px" class="mt-2 mb-4">
+                            <RadzenButton ButtonStyle="ButtonStyle.Success" Icon="add_circle_outline" Text="Nuevo Registro" Click="@InsertRow" />
+                        </RadzenStack>
+
+                        <RadzenDataGrid @ref="grid" AllowFiltering="true" AllowPaging="true" PageSize="15" AllowSorting="true" EditMode="DataGridEditMode.Single"
+                                        Data="@graficoProduccionAgrinesses" TItem="GraficoProduccionAgriness" RowUpdate="@OnUpdateRow" RowCreate="@OnCreateRow" GridLines="DataGridGridLines.Both" AllowColumnResize="true" AllowColumnReorder="true">
+                            <Columns>
+                                @* <RadzenDataGridColumn Property="Id" Title="Id" Resizable="true" /> *@
+                                <RadzenDataGridColumn Property="mesnum" Title="Mes" TextAlign="Radzen.TextAlign.Center">
+                                    <EditTemplate Context="item">
+                                        <RadzenNumeric @bind-Value="item.mesnum" Style="width: 90%; font-size: 12px;" />
+                                    </EditTemplate>
+                                </RadzenDataGridColumn>
+                                <RadzenDataGridColumn Property="mes" Title="Mes" TextAlign="Radzen.TextAlign.Center">
+                                    <EditTemplate Context="item">
+                                        <RadzenTextBox @bind-Value="item.mes" Style="width: 90%; font-size: 12px;" />
+                                    </EditTemplate>
+                                </RadzenDataGridColumn>
+                                <RadzenDataGridColumn Property="categoria_num" Title="Nro.Categoria" TextAlign="Radzen.TextAlign.Center">
+                                    <EditTemplate Context="item">
+                                        <RadzenNumeric @bind-Value="item.categoria_num" Style="width: 90%; font-size: 12px;" />
+                                    </EditTemplate>
+                                </RadzenDataGridColumn>
+                                <RadzenDataGridColumn Property="categoria" Title="Categoria" TextAlign="Radzen.TextAlign.Center">
+                                    <EditTemplate Context="item">
+                                        <RadzenTextBox @bind-Value="item.categoria" Style="width: 90%; font-size: 12px;" />
+                                    </EditTemplate>
+                                </RadzenDataGridColumn>
+                                <RadzenDataGridColumn Property="reportenum" Title="Nro.Reporte" TextAlign="Radzen.TextAlign.Center">
+                                    <EditTemplate Context="item">
+                                        <RadzenNumeric @bind-Value="item.reportenum" Style="width: 90%; font-size: 12px;" />
+                                    </EditTemplate>
+                                </RadzenDataGridColumn>
+                                <RadzenDataGridColumn Property="reporte" Title="Reporte" TextAlign="Radzen.TextAlign.Center">
+                                    <EditTemplate Context="item">
+                                        <RadzenTextBox @bind-Value="item.reporte" Style="width: 90%; font-size: 12px;" />
+                                    </EditTemplate>
+                                </RadzenDataGridColumn>
+                                <RadzenDataGridColumn Property="cantidad" Title="Valor" TextAlign="Radzen.TextAlign.Center">
+                                    <EditTemplate Context="item">
+                                        <RadzenNumeric @bind-Value="item.cantidad" Style="width: 90%; font-size: 12px;" />
+                                    </EditTemplate>
+                                </RadzenDataGridColumn>
+                                <RadzenDataGridColumn Property="media" Title="Media" TextAlign="Radzen.TextAlign.Center">
+                                    <EditTemplate Context="item">
+                                        <RadzenNumeric @bind-Value="item.media" Style="width: 90%; font-size: 12px;" />
+                                    </EditTemplate>
+                                </RadzenDataGridColumn>
+                                <RadzenDataGridColumn Property="meta" Title="Meta" TextAlign="Radzen.TextAlign.Center">
+                                    <EditTemplate Context="item">
+                                        <RadzenNumeric @bind-Value="item.meta" Style="width: 90%; font-size: 12px;" />
+                                    </EditTemplate>
+                                </RadzenDataGridColumn>
+
+
+                                <RadzenDataGridColumn Context="item" Filterable="false" Sortable="false" TextAlign="Radzen.TextAlign.Center" Title="Acciones">
+
+                                    <Template Context="item">
+                                        <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Small" Click="@(args => EditRow(item))" @onclick:stopPropagation="true" />
+                                        <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Variant="Variant.Flat" Shade="Shade.Lighter" Size="ButtonSize.Small" class="ms-1" Click="@(args => ConfirmarEliminacion(item))" @onclick:stopPropagation="true" />
+                                    </Template>
+
+                                    <EditTemplate Context="item">
+                                        @if (nuevo)
+                                        {
+                                            <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Variant="Variant.Flat" Size="ButtonSize.Small" Click="@((args) => SaveNewRow(item))" aria-label="Save" />
+                                        }
+                                        else
+                                        {
+                                            <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Variant="Variant.Flat" Size="ButtonSize.Small" Click="@((args) => SaveRow(item))" aria-label="Save" />
+                                        }
+                                        <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Small" class="ms-1" Click="@((args) => CancelEdit(item))" aria-label="Cancel" />
+                                    </EditTemplate>
+
+                                </RadzenDataGridColumn>
+                            </Columns>
+                        </RadzenDataGrid>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+@code {
+    private List<GraficoProduccionAgriness> graficoProduccionAgrinesses = new List<GraficoProduccionAgriness>();
+
+    private RadzenDataGrid<GraficoProduccionAgriness>? grid;
+
+    private bool nuevo = false;
+    private bool spinner = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            graficoProduccionAgrinesses = await Http.GetFromJsonAsync<List<GraficoProduccionAgriness>>("api/adicional/graficosproduccion/terminacion");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al cargar datos: {ex.Message}");
+        }
+        finally
+        {
+            spinner = false;
+        }
+    }
+
+    private async Task ConfirmarEliminacion(GraficoProduccionAgriness item)
+    {
+        var result = await sweetAlertService.FireAsync(new SweetAlertOptions
+            {
+                Title = "Confirmacion",
+                Text = "Deseas eliminar el registro?",
+                Icon = SweetAlertIcon.Warning,
+                ConfirmButtonText = "Sí",
+                ShowCancelButton = true,
+                CancelButtonText = "No",
+                ConfirmButtonColor = "#d33",
+                CancelButtonColor = "#3085d6",
+                FocusConfirm = false
+            });
+
+        if (result.IsConfirmed)
+        {
+            await EliminarItem(item);
+        }
+
+    }
+
+    private async Task EliminarItem(GraficoProduccionAgriness item)
+    {
+        Console.WriteLine("EliminarItem llamado");
+        await Http.DeleteAsync($"api/adicional/graficosproduccion/{item.id}");
+        graficoProduccionAgrinesses.Remove(item);
+        await grid.Reload();
+    }
+
+    async Task EditRow(GraficoProduccionAgriness item)
+    {
+        await grid.EditRow(item);
+    }
+
+    async Task SaveRow(GraficoProduccionAgriness item)
+    {
+        await grid.UpdateRow(item);
+        await GuardarItem(item);
+    }
+
+    async Task SaveNewRow(GraficoProduccionAgriness item)
+    {
+        await grid.UpdateRow(item);
+        await NuevoItem(item);
+    }
+
+    void CancelEdit(GraficoProduccionAgriness item)
+    {
+        grid.CancelEditRow(item);
+    }
+
+    void OnUpdateRow(GraficoProduccionAgriness item)
+    {
+        GuardarItem(item);
+        //NuevoItem(item);
+    }
+
+    void OnCreateRow(GraficoProduccionAgriness item)
+    {
+        graficoProduccionAgrinesses.Add(item);
+    }
+
+    async Task InsertRow()
+    {
+        nuevo = true;
+        var newItem = new GraficoProduccionAgriness();
+        graficoProduccionAgrinesses.Add(newItem);
+        await grid.InsertRow(newItem);
+    }
+
+    async Task GuardarItem(GraficoProduccionAgriness item)
+    {
+        try
+        {
+            var response = await Http.PutAsJsonAsync($"api/adicional/graficosproduccion/{item.id}", item);
+            if (response.IsSuccessStatusCode)
+            {
+                var success = await sweetAlertService.FireAsync(new SweetAlertOptions
+                    {
+                        Title = "Exito",
+                        Text = "Registro guardado.",
+                        Icon = SweetAlertIcon.Success,
+                        ShowConfirmButton = true,
+                        ShowCancelButton = false,
+                        FocusConfirm = true
+                    });
+            }
+            else
+            {
+                var error = await sweetAlertService.FireAsync(new SweetAlertOptions
+                    {
+                        Title = "Error",
+                        Text = "Registro no guardado.",
+                        Icon = SweetAlertIcon.Error,
+                        ShowConfirmButton = true,
+                        ShowCancelButton = false,
+                        ConfirmButtonColor = "#d33",
+                        FocusConfirm = true
+                    });
+            }
+        }
+        catch (Exception ex)
+        {
+            var error = await sweetAlertService.FireAsync(new SweetAlertOptions
+                {
+                    Title = "Error",
+                    Text = ex.Message,
+                    Icon = SweetAlertIcon.Error,
+                    ShowConfirmButton = true,
+                    ShowCancelButton = false,
+                    ConfirmButtonColor = "#d33",
+                    FocusConfirm = true
+                });
+        }
+    }
+
+    async Task NuevoItem(GraficoProduccionAgriness item)
+    {
+        try
+        {
+            var response = await Http.PostAsJsonAsync("api/adicional/graficosproduccion/", item);
+            if (response.IsSuccessStatusCode)
+            {
+                var success = await sweetAlertService.FireAsync(new SweetAlertOptions
+                    {
+                        Title = "Exito",
+                        Text = "Registro guardado.",
+                        Icon = SweetAlertIcon.Success,
+                        ShowConfirmButton = true,
+                        ShowCancelButton = false,
+                        FocusConfirm = true
+                    });
+                graficoProduccionAgrinesses = await Http.GetFromJsonAsync<List<GraficoProduccionAgriness>>("api/adicional/graficosproduccion/terminacion");
+            }
+            else
+            {
+                var error = await sweetAlertService.FireAsync(new SweetAlertOptions
+                    {
+                        Title = "Error",
+                        Text = "Registro no guardado.",
+                        Icon = SweetAlertIcon.Error,
+                        ShowConfirmButton = true,
+                        ShowCancelButton = false,
+                        ConfirmButtonColor = "#d33",
+                        FocusConfirm = true
+                    });
+            }
+
+        }
+        catch (Exception ex)
+        {
+            var error = await sweetAlertService.FireAsync(new SweetAlertOptions
+                {
+                    Title = "Error",
+                    Text = ex.Message,
+                    Icon = SweetAlertIcon.Error,
+                    ShowConfirmButton = true,
+                    ShowCancelButton = false,
+                    ConfirmButtonColor = "#d33",
+                    FocusConfirm = true
+                });
+
+        }
+        nuevo = false;
+    }
+}

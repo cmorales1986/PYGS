@@ -1,4 +1,6 @@
-﻿<div class="dashboard-header">
+﻿@inject NavigationManager navigationManager
+
+<div class="dashboard-header">
     <nav class="navbar navbar-expand-lg bg-white fixed-top">
         <a class="navbar-brand" href="index.html">PYGS</a>
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
@@ -95,15 +97,14 @@
                     </ul>
                 </li>
                 <li class="nav-item dropdown nav-user">
-                    <a class="nav-link nav-user-img" href="#" id="navbarDropdownMenuLink2" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><img src="assets/images/avatar-1.jpg" alt="" class="user-avatar-md rounded-circle"></a>
+                    <a class="nav-link nav-user-img" href="#" id="navbarDropdownMenuLink2" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><img src="@photoUser" alt="" class="user-avatar-md rounded-circle"></a>
                     <div class="dropdown-menu dropdown-menu-right nav-user-dropdown" aria-labelledby="navbarDropdownMenuLink2">
                         <div class="nav-user-info">
-                            <h5 class="mb-0 text-white nav-user-name">John Abraham </h5>
-                            <span class="status"></span><span class="ml-2">Available</span>
+                            <h5 class="mb-0 text-white nav-user-name">@fullName </h5>
+                            
                         </div>
-                        <a class="dropdown-item" href="#"><i class="fas fa-user mr-2"></i>Account</a>
-                        <a class="dropdown-item" href="#"><i class="fas fa-cog mr-2"></i>Setting</a>
-                        <a class="dropdown-item" href="#"><i class="fas fa-power-off mr-2"></i>Logout</a>
+                        <a class="dropdown-item" href="/edituser"><i class="fas fa-user mr-2"></i>Cuenta</a>
+                        <a class="dropdown-item" href="/logout"><i class="fas fa-power-off mr-2"></i>Logout</a>
                     </div>
                 </li>
             </ul>
@@ -111,33 +112,34 @@
     </nav>
 </div>
 
-@* <div class="@NavMenuCssClass nav-scrollable" @onclick="ToggleNavMenu">
-    <nav class="flex-column">
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="counter">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Counter
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="weather">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Weather
-            </NavLink>
-        </div>
-    </nav>
-</div> *@
 
 @code {
-    private bool collapseNavMenu = true;
+    private string? fullName;
+    private string? photoUser;
 
-    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+    [CascadingParameter]
+    private Task<AuthenticationState> AuthenticationStateTask { get; set; } = null!;
 
-    private void ToggleNavMenu()
+    protected async override Task OnParametersSetAsync()
     {
-        collapseNavMenu = !collapseNavMenu;
+        var url = navigationManager.Uri;
+        var autenticationState = await AuthenticationStateTask;
+        var claims = autenticationState.User.Claims.ToList();
+        var nombreClaims = claims.FirstOrDefault(x => x.Type == "FirstName");
+        var apellidoClaims = claims.FirstOrDefault(x => x.Type == "LastName");
+        var photoClaim = claims.FirstOrDefault(x => x.Type == "Photo");
+
+        if (photoClaim is not null)
+        {
+            photoUser = photoClaim.Value;
+        }
+
+
+        if (nombreClaims != null && apellidoClaims != null)
+        {
+            fullName = $"{nombreClaims.Value} {apellidoClaims.Value}";
+        }
+
+
     }
 }

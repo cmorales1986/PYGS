@@ -5,8 +5,11 @@ using Microsoft.IdentityModel.Tokens;
 using PYGS.Api.Data;
 using PYGS.Api.Helpers;
 using PYGS.Shared.Entities;
+using PYGS.Api.Services;
 using System.Text;
 using System.Text.Json.Serialization;
+using System;
+using System.Data.Odbc;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,10 +21,19 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Services.AddDbContext<DataContext>(x => x.UseSqlServer("name=LocalConnecion"));
-builder.Services.AddTransient<SeedDb>();
+builder.Services.AddDbContext<HanaDbContext>(x => x.UseSqlServer("name=HanaSQL"));
+builder.Services.AddDbContext<AgriSQLDbContext>(x => x.UseSqlServer("name=AgrinessSQL"));
+builder.Services.AddSingleton<DatabaseServiceHA>();
 
+builder.Services.AddTransient<SeedDb>();
 builder.Services.AddScoped<IFileStorage, FileStorage>();
 builder.Services.AddScoped<IMailHelper, MailHelper>();
+
+var url = builder.Configuration["APISap:Url"];
+var database = builder.Configuration["APISap:Database"];
+var user = builder.Configuration["APISap:User"];
+var pass = builder.Configuration["APISap:Pass"];
+builder.Services.AddScoped<IServiceLayerComponent>(s => new ServiceLayerComponent(url, database, user, pass));
 
 builder.Services.AddIdentity<User, IdentityRole>(x =>
 {

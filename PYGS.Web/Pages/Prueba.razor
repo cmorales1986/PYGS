@@ -1,0 +1,77 @@
+﻿@page "/prueba"
+@inject SweetAlertService sweetAlertService
+@inject HttpClient Http
+@inject NotificationService NotificationService
+@using System.Net.Http.Json
+
+<div class="container-fluid  dashboard-content">
+    <div class="row">
+        <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-12">
+            <div class="page-header">
+                <h2 class="pageheader-title">Atualizacion Datos Agriness Maternidad </h2>
+                <p class="pageheader-text">Proin placerat ante duiullam scelerisque a velit ac porta, fusce sit amet vestibulum mi. Morbi lobortis pulvinar quam.</p>
+                <div class="page-breadcrumb">
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="/" class="breadcrumb-link">Home</a></li>
+                            <li class="breadcrumb-item"><a href="#" class="breadcrumb-link">Agriness</a></li>
+                            <li class="breadcrumb-item active" aria-current="page">Maternidad</li>
+                        </ol>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-xl-12 col-lg-12 col-md-6 col-sm-12 col-12">
+            <h3>Seleccionar Producto</h3>
+
+            <div>
+                <RadzenDropDown Data="@articulos" TextProperty="Nombre" ValueProperty="Codigo" @bind-Value="selectedCodigo" Change="@OnProductoChange" Placeholder="Selecciona un producto" Style="width:300px;" />
+            </div>
+
+            <div>
+                <label>Código:</label>
+                <input type="text" value="@selectedArticulo?.Codigo" readonly />
+            </div>
+            <div>
+                <label>Precio:</label>
+                <input type="text" value="@selectedArticulo?.impuesto" readonly />
+            </div>
+           
+
+            @if (isLoading)
+            {
+                <div style="text-align:center;">
+                    <span class="dashboard-spinner spinner-primary spinner-md"></span>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<Articulo> articulos;
+    private string selectedCodigo;
+    private Articulo selectedArticulo;
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            isLoading = true;
+            articulos = await Http.GetFromJsonAsync<List<Articulo>>("api/articulos");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void OnProductoChange(object value)
+    {
+        selectedCodigo = (string)value;
+        selectedArticulo = articulos.FirstOrDefault(p => p.Codigo == selectedCodigo);
+    }
+}

@@ -15,12 +15,15 @@ namespace PYGS.Api.Data
 
         public DbSet<Categoria> Categorias { get; set; }
 
+        public DbSet<Articulo> Articulos { get; set; } 
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
             modelBuilder.Entity<Categoria>().HasIndex(x => x.Name).IsUnique();
             modelBuilder.Entity<Ciudad>().HasIndex(x => x.Name).IsUnique();
+            modelBuilder.Entity<Articulo>().HasIndex(x => x.Codigo).IsUnique();
         }
     }
 }

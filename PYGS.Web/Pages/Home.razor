@@ -1,12 +1,326 @@
 ﻿@page "/"
+@using PYGS.Shared.DTOs.Dashboard
+@inject IRepository repository
+@inject SweetAlertService sweetAlertService
+@using System.Globalization
 
 
-<PageTitle>Home</PageTitle>
+<div class="container-fluid  dashboard-content">
+    <div class="row">
+        <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-12">
+            <div class="page-header">
+                <h2 class="pageheader-title">Dahsboard Financiero </h2>
+                <p class="pageheader-text">Proin placerat ante duiullam scelerisque a velit ac porta, fusce sit amet vestibulum mi. Morbi lobortis pulvinar quam.</p>
+                <div class="page-breadcrumb">
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb">
+                           
+                            <li class="breadcrumb-item active" aria-current="page">Home</li>
+                        </ol>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
 
-<div class="container-fluid dashboard-content ">
-    <h1>Pagina de Inicio</h1>
+    <div class="row">
+        <div class="col-xl-3 col-lg-6 col-md-6 col-sm-12 col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-inline-block">
+                        <h5 class="text-muted">Cant. Facturas</h5>
+                        @if (spinner)
+                        {
+                            <div class="d-flex justify-content-center align-items-center">
+                                <span class="dashboard-spinner spinner-primary spinner-xs"></span>
+                            </div>
+                        }
+                        else
+                        {
+                            <h2 class="mb-0"> @FormatearMontoEs(cantFacturas)</h2>
+                        }
+                    </div>
+                    <div class="float-right icon-circle-medium  icon-box-lg  bg-info-light mt-1">
+                        <i class=" fas fa-dolly-flatbed fa-fw fa-sm text-info"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-lg-6 col-md-6 col-sm-12 col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-inline-block">
+                        <h5 class="text-muted">Notas en el Año</h5>
+                        @if (spinner)
+                        {
+                        <div class="d-flex justify-content-center align-items-center">
+                            <span class="dashboard-spinner spinner-primary spinner-xs"></span>
+                        </div>
+                        }else{
+                        <h2 class="mb-0"> @FormatearMontoEs(cantNotas)</h2>
+                        } 
+                    </div>
+                    <div class="float-right icon-circle-medium  icon-box-lg  bg-primary-light mt-1">
+                        <i class="fa fa-file-alt fa-fw fa-sm text-primary"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-lg-6 col-md-6 col-sm-12 col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-inline-block">
+                        <h5 class="text-muted">Facturado</h5>
+                        @if (spinner){
+                            <div class="d-flex justify-content-center align-items-center">
+                                <span class="dashboard-spinner spinner-primary spinner-xs"></span>
+                            </div>
+                        }
+                        else
+                        {
+                            <h2 class="mb-0"> @FormatearMonto(totalfacturado)</h2>
+                        }
+                        
+                    </div>
+                    <div class="float-right icon-circle-medium  icon-box-lg  bg-secondary-light mt-1">
+                        <i class="fa fa-money-bill-alt fa-fw fa-sm text-secondary"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-lg-6 col-md-6 col-sm-12 col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-inline-block">
+                        <h5 class="text-muted">A cobrar</h5>
+                        @if (spinner)
+                        {
+                            <div class="d-flex justify-content-center align-items-center">
+                                <span class="dashboard-spinner spinner-primary spinner-xs"></span>
+                            </div>
+                        }
+                        else
+                        {
+                            <h2 class="mb-0"> @FormatearMonto(totaldeudacliente)</h2>
+                        }
+                       
+                    </div>
+                    <div class="float-right icon-circle-medium  icon-box-lg  bg-brand-light mt-1">
+                        <i class="fa fa-paper-plane fa-fw fa-sm text-brand"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12 col-12">
+            <div class="card">
+                <h5 class="card-header">Facturacion (Gs.) x Categoria</h5>
+                <div class="card-body">
+                    @if (spinner)
+                    {
+                        <div class="d-flex justify-content-center align-items-center">
+                            <span class="dashboard-spinner spinner-primary spinner-md"></span>
+                        </div>
+                    }
+                    else
+                    {
+                        <RadzenChart>
+                            <RadzenPieSeries Data="@totalFacturaCategorias" CategoryProperty="categoria" ValueProperty="total">
+                                <RadzenSeriesDataLabels Visible="false" />
+                                <RadzenValueAxis Formatter="@FormatAsUSD" />
+                            </RadzenPieSeries>
+                        </RadzenChart>
+                    }
+                    
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12 col-12">
+            <div class="card">
+                <h5 class="card-header">Facturacion (Gs.) x Mes </h5>
+                <div class="card-body">
+                    @if (spinner)
+                    {
+                        <div class="d-flex justify-content-center align-items-center">
+                            <span class="dashboard-spinner spinner-primary spinner-md"></span>
+                        </div>
+                    }
+                    else
+                    {
+                        <RadzenChart>
+                            <RadzenLineSeries Smooth="false" Data="@facturadoMesDTOs" CategoryProperty="mes" Title="2024" ValueProperty="total" RenderingOrder="1" LineType="LineType.Solid">
+                                <RadzenMarkers Visible="true" MarkerType="MarkerType.Circle" />
+                            </RadzenLineSeries>
+                            <RadzenLineSeries Smooth="false" Data="@facturadoMesAnts" CategoryProperty="mes" Title="2023" ValueProperty="total" RenderingOrder="1" LineType="LineType.Solid">
+                                <RadzenMarkers Visible="true" MarkerType="MarkerType.Circle" />
+                            </RadzenLineSeries>
+                            <RadzenCategoryAxis Padding="20" />
+                            <RadzenValueAxis Formatter="@FormatAsUSD">
+                                <RadzenGridLines Visible="true" />
+                                <RadzenAxisTitle Text="Fact en Gs." />
+                            </RadzenValueAxis>
+                        </RadzenChart>
+                    }
+                    
+                </div>
+            </div>
+        </div>
+    </div>
 
-    Welcome to your new app.
 
-</div>
+ </div>
 
+@code{
+    public int? cantFacturas;
+    public int? cantNotas;
+    public decimal? totalfacturado;
+    public decimal? totaldeudacliente;
+    public bool spinner = false;
+
+    private List<TotalFacturaCategoriaDTO>? totalFacturaCategorias;
+    private List<FacturadoMesDTO>? facturadoMesDTOs;
+    private List<FacturadoMesAntDTO>? facturadoMesAnts;
+
+    protected override async Task OnInitializedAsync()
+    {
+        spinner = true;
+        await GetCantidadFacturas();
+        await GetCantidadNotas();
+        await GetTotalFacturado();
+        await GetTotalDeudaCliente();
+        await ChartTotalFacturaCategoria();
+        await ChartTotalFacturaMes();
+        await ChartTotalFacturaMesAnt();
+    }
+
+    public async Task GetCantidadFacturas()
+    {
+
+        var responseHttp = await repository.Get<List<CantFacturasDTO>>("/api/adicional/dashboard/cantfacturas");
+        if (responseHttp.Error)
+        {
+            var message = await responseHttp.GetErrorMessageAsync();
+            await sweetAlertService.FireAsync("Error", message, SweetAlertIcon.Error);
+            return;
+        }
+
+        var listCantFact = responseHttp.Response!;
+        cantFacturas = listCantFact.FirstOrDefault().canfact;
+        spinner = false;
+    }
+
+    public async Task GetCantidadNotas()
+    {
+        var responseHttp = await repository.Get<List<CantNotasDTOcs>>("/api/adicional/dashboard/cantnotas");
+        if (responseHttp.Error)
+        {
+            var message = await responseHttp.GetErrorMessageAsync();
+            await sweetAlertService.FireAsync("Error", message, SweetAlertIcon.Error);
+            return;
+        }
+
+        var listCantFact = responseHttp.Response!;
+        cantNotas = listCantFact.FirstOrDefault().totalnotas;
+        spinner = false;
+    }
+
+    public async Task GetTotalFacturado()
+    {
+        var responseHttp = await repository.Get<List<ToalFacturadoDTO>>("/api/adicional/dashboard/totalmonto");
+        if (responseHttp.Error)
+        {
+            var message = await responseHttp.GetErrorMessageAsync();
+            await sweetAlertService.FireAsync("Error", message, SweetAlertIcon.Error);
+            return;
+        }
+
+        var listCantFact = responseHttp.Response!;
+        totalfacturado = listCantFact.FirstOrDefault().totalmonto;
+        spinner = false;
+    }
+
+    public async Task GetTotalDeudaCliente()
+    {
+        var responseHttp = await repository.Get<List<TotalDeudaClienteDTO>>("/api/adicional/dashboard/totaldeudacliente");
+        if (responseHttp.Error)
+        {
+            var message = await responseHttp.GetErrorMessageAsync();
+            await sweetAlertService.FireAsync("Error", message, SweetAlertIcon.Error);
+            return;
+        }
+
+        var listCantFact = responseHttp.Response!;
+        totaldeudacliente = listCantFact.FirstOrDefault().monto;
+        spinner = false;
+    }
+
+    public async Task ChartTotalFacturaCategoria()
+    {
+        var responseHttp = await repository.Get<List<TotalFacturaCategoriaDTO>>("/api/adicional/dashboard/facturacategoria");
+        if (responseHttp.Error)
+        {
+            var message = await responseHttp.GetErrorMessageAsync();
+            await sweetAlertService.FireAsync("Error", message, SweetAlertIcon.Error);
+            return;
+        }
+
+        totalFacturaCategorias = responseHttp.Response!;
+        spinner = false;
+    }
+
+    public async Task ChartTotalFacturaMes()
+    {
+        var responseHttp = await repository.Get<List<FacturadoMesDTO>>("/api/adicional/dashboard/facturacionmes");
+        if (responseHttp.Error)
+        {
+            var message = await responseHttp.GetErrorMessageAsync();
+            await sweetAlertService.FireAsync("Error", message, SweetAlertIcon.Error);
+            return;
+        }
+
+        facturadoMesDTOs = responseHttp.Response!;
+        spinner = false;
+    }
+
+    public async Task ChartTotalFacturaMesAnt()
+    {
+        var responseHttp = await repository.Get<List<FacturadoMesAntDTO>>("/api/adicional/dashboard/facturacionmesant");
+        if (responseHttp.Error)
+        {
+            var message = await responseHttp.GetErrorMessageAsync();
+            await sweetAlertService.FireAsync("Error", message, SweetAlertIcon.Error);
+            return;
+        }
+
+        facturadoMesAnts = responseHttp.Response!;
+        spinner = false;
+    }
+
+    string FormatAsUSD(object value)
+    {
+        return ((double)value).ToString("#,##0", CultureInfo.CreateSpecificCulture("es-ES"));
+    }
+
+    private string FormatearMonto(decimal? monto)
+    {
+        var culture = new CultureInfo("es-ES");
+        if (monto.HasValue)
+        {
+            if (monto >= 1000000)
+                return (monto.Value / 1000000).ToString("#,##0", culture) + " M";
+            else if (monto >= 1000)
+                return (monto.Value / 1000).ToString("#,##0", culture) + " K";
+            else
+                return monto.Value.ToString("#,##0", culture);
+        }
+        return "0";
+    }
+
+    public string FormatearMontoEs(int? monto)
+    {
+        if (!monto.HasValue)
+            return "0";
+
+        var culture = new CultureInfo("es-ES");
+        return monto.Value.ToString("#,##0", culture);
+    }
+}
